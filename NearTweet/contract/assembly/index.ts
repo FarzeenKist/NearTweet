@@ -1,9 +1,25 @@
-import { math, base64, logging } from "near-sdk-as";
-import { Post, postsForStore, idPostsForShow } from "./model";
+import { math, base64, logging, context, u128 } from "near-sdk-as";
+import { Post, postsForStore, idPostsForShow, setAdmin, getAdmin } from "./model";
 
 const POST_LIMIT = 10;
 
 const POST_SIZE: u32 = 16;
+
+const donationAmount: u128 = u128.from("10000000000000000000000");
+
+/**
+ * @dev assigns a new admin
+ * @param admin accountId of admin
+ */
+export function assignAdmin(admin: string): void {
+  assert(context.predecessor == context.contractName, "Unauthorized caller");
+  setAdmin(admin);
+}
+
+export function retrieveAdmin(): string {
+  let admin = getAdmin();
+  return admin;
+}
 
 /**
  * generate id when create new post
@@ -20,6 +36,8 @@ export function generatePostNumber(): string {
  * @param content string content of post
  */
 export function addPost(content: string): void {
+  assert(content.length > 0, "Empty content for post");
+  assert(idPostsForShow.length < 10, "There can only be 10 posts at a time");
   let id = generatePostNumber();
   const message = new Post(content, id);
   postsForStore.set(id, message);
@@ -34,6 +52,7 @@ export function addPost(content: string): void {
  */
 export function addComment(content: string, idPost: string): Post {
   let post = checkPost(idPost);
+  assert(content.length > 0, "Empty content for comment");
   post.addComment(content);
   postsForStore.set(idPost, post);
   logging.log("Comment success!");
@@ -88,6 +107,8 @@ export function dislikePost(idPost: string): Post {
  * clear all post from storage
  */
 export function clearAllPosts(): void {
+  const admin = getAdmin();
+  assert(context.sender.toString() == admin.toString(), "Only admin can clear all posts");
   for (let i = 0; i < idPostsForShow.length; i++) {
     let post = postsForStore.get(idPostsForShow[i]);
     if (!post) {
@@ -102,12 +123,14 @@ export function clearAllPosts(): void {
 }
 
 /**
- * increase amount donate time of post
+ * @dev allow users to donate 0.1 NEAR  to post's sender
  * @param idPost id post
  * @returns Post that user donate
  */
 export function donatePost(idPost: string): Post {
   let post = checkPost(idPost);
+  assert(context.attachedDeposit.toString() == donationAmount.toString(), "You can only donate 0.1 NEAR");
+  assert(context.sender.toString() != post.sender.toString(),"You can't donate to your own post");
   post.donate();
   postsForStore.set(idPost, post);
   logging.log("Donate success!");

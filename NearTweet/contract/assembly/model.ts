@@ -1,4 +1,4 @@
-import { context, PersistentMap, PersistentVector } from "near-sdk-as";
+import { context, PersistentMap, PersistentVector, storage } from "near-sdk-as";
 
 @nearBindgen
 /**
@@ -9,7 +9,7 @@ export class Post {
   comments: Array<Comment>; // list comment of post
   time: string;
   likes: Array<string>; // list who like this post
-  donateCount: number; // amount this post has been donated
+  donateCount: number; // amount this post has been received in donation
   constructor(public content: string, public id: string) {
     this.sender = context.sender;
     this.comments = [];
@@ -52,6 +52,15 @@ export class Comment {
   constructor(public content: string) {
     this.sender = context.sender;
   }
+}
+
+//Set Admin
+export function setAdmin(admin: string): void {
+  storage.set<string>("admin", admin)
+}
+
+export function getAdmin(): string {
+  return storage.getPrimitive<string>("admin", "yenatmi.testnet");
 }
 
 // PersistentMap stote all post created
