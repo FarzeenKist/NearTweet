@@ -3,6 +3,8 @@ NEARTweet - a twitter inspired web 3 application based on NEAR platform
 OVERVIEW
 ======
 
+https://neartweet.netlify.app/
+
 NEARTweet is a social networking project on a decentralized platform. Everyone can create posts, comment, like or donate like normal social networks.
 
 
